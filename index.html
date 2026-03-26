@@ -1,0 +1,50 @@
+
+<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>Site Matcher</title>
+<link rel='stylesheet' href='style.css'>
+<link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'>
+<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
+</head><body>
+<h1>Site Matcher</h1>
+<label for='vdfBox'>Cod VDF</label>
+<input id='vdfBox' placeholder='Cauta Cod VDF'>
+<label for='oroBox'>Code Orange</label>
+<input id='oroBox' placeholder='Cauta Cod ORO'>
+<button onclick='searchVDF()'>Search VDF</button>
+<button onclick='searchORO()'>Search ORO</button>
+<div id='result'></div>
+<div id='map'></div>
+<script>
+let recs=[];
+fetch('data/sites.json').then(r=>r.json()).then(j=>{recs=j});
+function norm(v){return String(v).trim().toLowerCase().replace(/\s+/g,'');}
+let map=L.map('map').setView([45,25],6);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+let marker;
+function run(q,f){
+  let r=recs.filter(x=>norm(x[f])===q);
+  let h='';
+  if(r.length){
+    let o=r[0];
+    h += `<b>COD VDF:</b> ${o['Cod VDF']||''}<br>`;
+    h += `<b>COD ORO:</b> ${o['Cod ORO']||''}<br>`;
+    h += `<b>Descriere:</b> ${o['Descriere']||'N/A'}<br>`;
+    h += `<b>Adresa:</b> ${o['Adresa']||'N/A'}<br>`;
+    if(o['LatDecimal'] && o['LongDecimal']){
+      let lat=o['LatDecimal']; let lon=o['LongDecimal'];
+      h += `<a target='_blank' href='https://maps.google.com/?q=${lat},${lon}'>Deschide în Google Maps</a>`;
+      if(marker) marker.remove();
+      marker=L.marker([lat,lon]).addTo(map);
+      map.setView([lat,lon],15);
+    } else {
+      h += `<i>Coordonate lipsă</i>`;
+    }
+  } else {
+    h='Nicio locatie gasita.';
+  }
+  document.getElementById('result').innerHTML=h;
+}
+function searchVDF(){run(norm(document.getElementById('vdfBox').value),'Cod VDF');}
+function searchORO(){run(norm(document.getElementById('oroBox').value),'Cod ORO');}
+</script>
+</body></html>
